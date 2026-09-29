@@ -1,0 +1,6 @@
+{
+  "name": "AI Based AQI Monitoring System",
+  "description": "Real-time AI-powered Air Quality Index (AQI) monitoring system with DHT22, MQ135, MQ2, and MQ7 sensor telemetry, predictive analytics, emergency spike alerts, Gujarat cities comparison, interactive location map, and downloadable reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
