@@ -1,45 +1,52 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dns from 'dns';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
-dotenv.config();
+// Fix for Node.js DNS ECONNREFUSED on some Windows networks
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/aqi_monitoring_db';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Ensure we load the .env from the backend directory
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+const MONGODB_URI = process.env.MONGODB_URI;
 let mongoServer = null;
 
 export const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 2000,
-    });
+    if (!MONGODB_URI) throw new Error("MONGODB_URI is not defined.");
+    
+    // Connect to MongoDB Atlas
+    console.log(`🔌 Attempting to connect to MongoDB Atlas...`);
+    const conn = await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 3000 });
+    
     console.log(`✅ MongoDB Connected successfully: ${conn.connection.host}`);
-    console.log(`📊 Database Name: ${conn.connection.name}`);
     return conn;
   } catch (error) {
-    console.log(`⚠️ Default MongoDB Connection Failed (${error.message}).`);
-    console.log(`🚀 Starting in-memory MongoDB server as fallback...`);
+    console.error(`⚠️ Atlas Connection Failed:`, error.message);
+    console.log(`🚀 Starting local in-memory MongoDB server as fallback so you can test the app...`);
     
     try {
+      await mongoose.disconnect(); // Clear failed connection state
       const fs = await import('fs');
-      const path = await import('path');
       const dbPath = path.resolve(process.cwd(), '.mongo-data');
       if (!fs.existsSync(dbPath)) fs.mkdirSync(dbPath);
 
       mongoServer = await MongoMemoryServer.create({
-        instance: {
-          port: 27017,
-          dbPath: dbPath,
-          storageEngine: 'wiredTiger'
-        }
+        instance: { port: 27017, dbPath: dbPath, storageEngine: 'wiredTiger' }
       });
       const uri = mongoServer.getUri();
       const conn = await mongoose.connect(uri);
-      console.log(`✅ In-Memory MongoDB Connected successfully: ${uri}`);
+      console.log(`✅ Local Database Running at: ${uri}`);
       return conn;
     } catch (fallbackError) {
-      console.error(`❌ In-Memory MongoDB Connection Error: ${fallbackError.message}`);
-      return null;
+      console.error(`❌ Local Database Failed:`, fallbackError.message);
+      process.exit(1);
     }
   }
 };
-

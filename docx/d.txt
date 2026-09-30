@@ -1,0 +1,264 @@
+You are an expert full-stack developer with 10+ years of experience in Python Flask, MongoDB Atlas, REST APIs, ESP32/IoT systems, authentication, and AI/ML applications.
+
+I am developing a final-year project called:
+
+"AI Based AQI Monitoring System"
+
+My project needs MongoDB Atlas as the main database.
+
+I want you to inspect my existing project carefully and FIX the MongoDB/database integration without unnecessarily changing my existing UI or project structure.
+
+PROJECT REQUIREMENTS:
+
+1. Backend:
+- Python
+- Flask
+- REST API
+- MongoDB Atlas
+- PyMongo
+- bcrypt/password hashing where authentication is already implemented
+
+2. Frontend:
+- Existing AQI monitoring dashboard
+- Existing login/register system
+- Existing UI must remain unchanged unless a change is required for functionality.
+
+3. AQI data that MongoDB should store:
+- city/location
+- PM2.5
+- PM10
+- CO
+- NO2
+- SO2
+- O3
+- temperature
+- humidity
+- AQI value
+- AQI category
+- timestamp
+- sensor/device ID
+
+4. MongoDB database structure should be organized like:
+
+Database:
+aqi_monitoring
+
+Collections:
+- users
+- aqi_data
+- sensor_data
+- predictions
+- alerts
+
+5. MongoDB Atlas:
+I am using MongoDB Atlas.
+
+The connection string will be stored securely in an environment variable:
+
+MONGO_URI
+
+DO NOT hard-code the MongoDB username or password in source code.
+
+Use a .env file and python-dotenv.
+
+Example:
+
+MONGO_URI=mongodb+srv://USERNAME:PASSWORD@CLUSTER.mongodb.net/aqi_monitoring
+
+Never expose the real password in frontend code, GitHub, screenshots, logs, or API responses.
+
+TASK:
+
+First inspect my entire project structure and existing code.
+
+Then:
+
+1. Identify the exact reason MongoDB is not connecting.
+
+2. Check:
+- MongoDB URI
+- MongoDB Atlas cluster
+- Database name
+- Collection names
+- IP Access List
+- Database user
+- username/password
+- PyMongo installation
+- environment variables
+- Flask configuration
+- imports
+- connection initialization
+- API routes
+- authentication routes
+- database queries
+
+3. Create a clean MongoDB connection configuration.
+
+Use a structure similar to:
+
+config.py
+.env
+app.py
+database/
+
+4. Add proper MongoDB connection handling.
+
+5. Add a MongoDB connection test when the Flask application starts.
+
+The application should clearly show:
+
+MongoDB Connected Successfully
+
+or
+
+MongoDB Connection Failed: [actual error]
+
+6. Add a health-check API:
+
+GET /api/health
+
+Expected response:
+
+{
+    "status": "success",
+    "database": "MongoDB Connected"
+}
+
+7. Create/repair AQI API endpoints:
+
+POST /api/aqi
+
+GET /api/aqi
+
+GET /api/aqi/latest
+
+GET /api/aqi/<city>
+
+8. Create a proper AQI document format:
+
+{
+    "city": "Rajkot",
+    "pm25": 65,
+    "pm10": 110,
+    "co": 0.8,
+    "no2": 25,
+    "so2": 10,
+    "o3": 35,
+    "temperature": 32,
+    "humidity": 58,
+    "aqi": 145,
+    "aqi_category": "Unhealthy",
+    "device_id": "ESP32_001",
+    "timestamp": "current UTC timestamp"
+}
+
+9. Make sure timestamps are stored properly using Python datetime rather than unreliable string timestamps wherever possible.
+
+10. Add error handling for:
+- MongoDB unavailable
+- invalid MongoDB URI
+- duplicate users
+- invalid data
+- missing fields
+- server errors
+- invalid ObjectId
+
+11. Check the existing user authentication system.
+
+If the current project has:
+
+/register
+/login
+/logout
+
+make sure user data is stored in:
+
+users
+
+MongoDB collection.
+
+User document should contain:
+
+{
+    "fullname": "...",
+    "email": "...",
+    "phone": "...",
+    "password": "hashed_password",
+    "created_at": "timestamp"
+}
+
+Passwords MUST NOT be stored as plain text.
+
+12. If the existing project uses SQLite, migrate the database logic to MongoDB while preserving the existing frontend functionality.
+
+13. Do NOT create a second unnecessary database system.
+
+14. Do NOT remove existing features.
+
+15. Do NOT rewrite the entire project if only a small fix is required.
+
+16. Keep the code beginner-friendly and properly commented.
+
+17. Tell me exactly which files need to be created or modified.
+
+For every modification, provide the COMPLETE file code, not just a small snippet.
+
+IMPORTANT:
+
+Before giving the final solution, inspect the existing code I provide.
+
+Do not assume my folder structure.
+
+Do not invent missing files.
+
+If an error exists, explain:
+
+ERROR:
+[actual error]
+
+CAUSE:
+[why it happens]
+
+FIX:
+[exact solution]
+
+FILE TO CHANGE:
+[filename]
+
+COMPLETE CODE:
+[full corrected code]
+
+TEST:
+[exact terminal command and expected output]
+
+Also provide the exact commands I need to run in VS Code on Windows.
+
+For example:
+
+pip install pymongo python-dotenv
+
+python app.py
+
+Then provide a final checklist:
+
+[ ] MongoDB Atlas cluster created
+[ ] Database user created
+[ ] IP address added
+[ ] MONGO_URI configured
+[ ] .env created
+[ ] PyMongo installed
+[ ] Flask connected to MongoDB
+[ ] /api/health working
+[ ] User registration working
+[ ] Login working
+[ ] AQI data insertion working
+[ ] AQI data retrieval working
+[ ] Dashboard receiving MongoDB data
+
+MOST IMPORTANT:
+
+Do not just explain MongoDB.
+
+Actually debug and repair my existing project based on the files/code I provide.
+
+If you need any missing information, first tell me exactly which file or error you need instead of guessing.

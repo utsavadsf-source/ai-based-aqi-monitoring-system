@@ -108,7 +108,6 @@ export const LocationMap: React.FC<LocationMapProps> = ({ selectedCity }) => {
         const map = new Map(mapRef.current as HTMLElement, {
           center: centerCoords,
           zoom: 12,
-          styles: DARK_MAP_STYLE,
           disableDefaultUI: false,
           zoomControl: true,
           mapTypeControl: true,
@@ -202,7 +201,7 @@ export const LocationMap: React.FC<LocationMapProps> = ({ selectedCity }) => {
               content: createPin(node.aqi > 100 ? '#f59e0b' : '#10b981', 8),
             });
 
-      marker.addListener('click', () => {
+      marker.addEventListener('gmp-click', () => {
         setActiveStationName(node.name);
         setActiveStationAqi(node.aqi);
 

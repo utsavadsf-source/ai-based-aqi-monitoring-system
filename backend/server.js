@@ -33,7 +33,16 @@ connectDB().then(async (conn) => {
       console.log('🔄 Database is empty. Auto-seeding initial data...');
       await seedDatabase();
     }
+    
+    // Start Server ONLY after DB connects
+    app.listen(PORT, () => {
+      console.log(`🚀 AQI System API Backend running on http://localhost:${PORT}`);
+      console.log(`📡 Endpoints available: /api/cities, /api/sensor-data, /api/logs/sensors, /api/auth/login`);
+    });
   }
+}).catch(err => {
+  console.error('Failed to connect to DB, server not started:', err);
+  process.exit(1);
 });
 
 // Helper: Calculate AQI breakpoint from PM2.5, PM10 & Gas inputs
@@ -231,6 +240,85 @@ app.get('/api/logs/alerts', async (req, res) => {
   }
 });
 
+// --- NEW AQI ENDPOINTS ---
+
+// GET /api/aqi - Get all AQI logs
+app.get('/api/aqi', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 100;
+    const logs = await SensorLog.find({}).sort({ recorded_at: -1 }).limit(limit);
+    res.json(logs);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/aqi/latest - Get latest AQI for all cities
+app.get('/api/aqi/latest', async (req, res) => {
+  try {
+    const cities = await City.find({}).select('id name aqi status pm25 pm10 temp humidity sensors updatedAt');
+    res.json(cities);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/aqi/:city - Get AQI for a specific city
+app.get('/api/aqi/:city', async (req, res) => {
+  try {
+    const cityId = req.params.city.toLowerCase();
+    const cityData = await City.findOne({ id: cityId });
+    if (!cityData) return res.status(404).json({ error: 'City not found' });
+    res.json(cityData);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/aqi - Manually Insert AQI (alternative to /api/sensor-data)
+app.post('/api/aqi', async (req, res) => {
+  try {
+    const { city_id, pm25, pm10, co, no2, so2, o3, temperature, humidity, aqi } = req.body;
+    if (!city_id || aqi === undefined) {
+      return res.status(400).json({ error: 'city_id and aqi are required' });
+    }
+    
+    const status = getAQIStatus(aqi);
+
+    const logEntry = new SensorLog({
+      city_id,
+      pm25: pm25 || 0,
+      pm10: pm10 || 0,
+      co_ppm: co || 0,
+      temperature: temperature || 0,
+      humidity: humidity || 0,
+      aqi,
+      recorded_at: new Date()
+    });
+    await logEntry.save();
+
+    const updatedCity = await City.findOneAndUpdate(
+      { id: city_id },
+      { 
+        aqi, 
+        status, 
+        pm25: pm25 || 0, 
+        pm10: pm10 || 0, 
+        co: co || 0,
+        temp: temperature || 0,
+        humidity: humidity || 0,
+        updatedAt: new Date() 
+      },
+      { new: true, upsert: true }
+    );
+
+    res.status(201).json({ success: true, log: logEntry, city: updatedCity });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 // 7. USER AUTH: Register
 app.post('/api/auth/register', async (req, res) => {
   try {
@@ -297,8 +385,4 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`🚀 AQI System API Backend running on http://localhost:${PORT}`);
-  console.log(`📡 Endpoints available: /api/cities, /api/sensor-data, /api/logs/sensors, /api/auth/login`);
-});
+// Server started in connectDB().then()
